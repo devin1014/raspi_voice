@@ -10,6 +10,6 @@ const text2voice = require('./app/text_to_voice');
 // const voice2text = require('./app/voice_to_text');
 // voice2text();
 
-new OMXPlayer({}).start('./voice/audio_08241706.mp3', {spawnOptions: {}}, (err) => {
+new OMXPlayer({}).start(__dirname + '/sample/audio.mp3', {spawnOptions: {}}, (err) => {
     console.error("omxPlayer err: " + err);
 })

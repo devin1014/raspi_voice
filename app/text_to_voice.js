@@ -3,15 +3,15 @@
  * 错误码链接：https://www.xfyun.cn/document/error-code （code返回错误码时必看）
  */
 const WebSocket = require('ws')
-const fileUtil = require('./util/file');
 const config = require('./config').Config_Tts;
 const log = require('log4node');
+const fs = require('fs');
 
 /**
  * @description: 将文本信息批量转换为语音文件
  * @return:
  */
-function convert(text) {
+function convert(text, callback) {
     let webSocket = new WebSocket(config.getWsUrl())
 
     // 连接建立完毕，读取数据进行识别
@@ -37,14 +37,17 @@ function convert(text) {
         // 将返回内容写入音频文件
         const audioBuf = Buffer.from(res.data.audio, 'base64')
         log.info('正在接收数据：... ' + audioBuf.byteLength + ' byte');
-        const audioFile = 'audio_' + timeStr + ".mp3";
-        fileUtil.save(audioFile, audioBuf);
+        const audioFile = process.cwd() + '/voice/audio_' + timeStr + ".mp3";
+        save(audioFile, audioBuf);
         // 完成
         if (res.code === 0 && res.data.status === 2) {
             log.info('保存文件：' + audioFile);
-            const txtFile = 'data_' + timeStr + ".txt";
+            const txtFile = process.cwd() + '/voice/data_' + timeStr + ".txt";
             log.info('保存文件：' + txtFile);
-            fileUtil.save(txtFile, text);
+            save(txtFile, text, (err) => {
+                if (err) callback(err)
+                else callback(null, audioFile)
+            })
             webSocket.close()
         }
     })
@@ -84,6 +87,16 @@ function getDateMMddHHmm() {
     const hour = ("0" + date.getHours()).slice(-2);
     const min = ("0" + date.getMinutes()).slice(-2);
     return month + day + hour + min;
+}
+
+// 将文件保存在output目录
+function save(file, data, callback) {
+    fs.writeFile(file, data, {flag: 'a'}, (err) => {
+        if (err) {
+            log.error('出错了：' + err)
+        }
+        if (callback) callback(err)
+    })
 }
 
 module.exports = convert
